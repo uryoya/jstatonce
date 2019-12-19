@@ -59,10 +59,28 @@ func main() {
 	javaCmd := opts.javaArgs[0]
 	javaArgs := opts.javaArgs[1:]
 
+	jvmOutFile, err := os.Create(opts.javaOutput)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "can not open file: %s, couse %s\n", opts.javaOutput, err)
+		os.Exit(1)
+	}
+	defer jvmOutFile.Close()
+
 	jvmCmd := exec.Command(javaCmd, javaArgs...)
+	jvmCmdStdout, err := jvmCmd.StdoutPipe()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed pipe jvm stdout: %s\n", err)
+		os.Exit(1)
+	}
+
+	go func() {
+		io.Copy(jvmOutFile, jvmCmdStdout)
+	}()
+
 	err = jvmCmd.Start()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed execute java: %s\n", err)
+		os.Exit(1)
 	}
 
 	replacedArgs := replaceVmid(opts.jstatArgs, jvmCmd.Process.Pid)
@@ -70,11 +88,13 @@ func main() {
 	jstatStdout, err := jstatCmd.StdoutPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed pipe jstat stdout: %s\n", err)
+		os.Exit(1)
 	}
 	defer jstatStdout.Close()
 	jstatStderr, err := jstatCmd.StderrPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed pipe jstat stderr: %s\n", err)
+		os.Exit(1)
 	}
 	defer jstatStderr.Close()
 
@@ -86,6 +106,7 @@ func main() {
 	err = jstatCmd.Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed execute jstat: %s\n", err)
+		os.Exit(1)
 	}
 
 	jvmCmd.Wait()
