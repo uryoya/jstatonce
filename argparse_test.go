@@ -16,7 +16,7 @@ func Test_argparse_help(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err, opts := argparse(test.args)
+		opts, err := argparse(test.args)
 		if err != nil {
 			t.Errorf("予期しないエラーの発生!: %v", err)
 		}
@@ -40,7 +40,7 @@ func Test_argparse_javaOutput(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err, opts := argparse(test.args)
+		opts, err := argparse(test.args)
 		if !test.err && err != nil {
 			t.Errorf("予期しないエラーの発生!: %v", err)
 		}

@@ -46,7 +46,7 @@ $ jstatonce -o app.log "java -cp app.jar com.example.App -J-Xms100m -J-Xmx100m" 
 }
 
 func main() {
-	err, opts := argparse(os.Args)
+	opts, err := argparse(os.Args)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
