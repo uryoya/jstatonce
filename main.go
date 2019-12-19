@@ -48,7 +48,7 @@ $ jstatonce -o app.log "java -cp app.jar com.example.App -J-Xms100m -J-Xmx100m" 
 func main() {
 	err, opts := argparse(os.Args)
 	if err != nil {
-		fmt.Print(err)
+		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
 	if opts.needHelp {
@@ -62,19 +62,19 @@ func main() {
 	jvmCmd := exec.Command(javaCmd, javaArgs...)
 	err = jvmCmd.Start()
 	if err != nil {
-		fmt.Errorf("failed execute java: %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed execute java: %s\n", err)
 	}
 
 	replacedArgs := replaceVmid(opts.jstatArgs, jvmCmd.Process.Pid)
 	jstatCmd := exec.Command("jstat", replacedArgs...)
 	jstatStdout, err := jstatCmd.StdoutPipe()
 	if err != nil {
-		fmt.Errorf("failed pipe jstat stdout: %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed pipe jstat stdout: %s\n", err)
 	}
 	defer jstatStdout.Close()
 	jstatStderr, err := jstatCmd.StderrPipe()
 	if err != nil {
-		fmt.Errorf("failed pipe jstat stderr: %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed pipe jstat stderr: %s\n", err)
 	}
 	defer jstatStderr.Close()
 
@@ -85,7 +85,7 @@ func main() {
 
 	err = jstatCmd.Run()
 	if err != nil {
-		fmt.Errorf("failed execute jstat: %s\n", err)
+		fmt.Fprintf(os.Stderr, "failed execute jstat: %s\n", err)
 	}
 
 	jvmCmd.Wait()
