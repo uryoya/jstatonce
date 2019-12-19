@@ -45,11 +45,6 @@ $ jstatonce -o app.log "java -cp app.jar com.example.App -J-Xms100m -J-Xmx100m" 
 `
 }
 
-/* jstatonce [jstatonce options] "[java execute command]" "[jstat arguments]"
- *
- * e.g.
- * $ jstatonce
- */
 func main() {
 	err, opts := argparse(os.Args)
 	if err != nil {
