@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 )
 
 func replaceVmid(jstatArgs []string, vmid int) []string {
@@ -22,24 +21,56 @@ func replaceVmid(jstatArgs []string, vmid int) []string {
 	return replacedArgs
 }
 
-/* jstatonce "[java execute command]" [jstat arguments ( without vmid )]
+func help() string {
+	return `使い方: jstatonce [jstatonce options...] "[java args]" "[jstat args]"
+
+jstatonce option
+-h --help                             : このヘルプを表示
+-o --java-output "path/to/outputfile" : java command の出力先
+                                        指定しない場合は /dev/null が指定されます
+
+java args
+- java の実行パスを含めてください
+e.g. "java Application -J-Xms512m -J-Xmx512m"
+
+jstat arguments
+- jstat の実行パスを **含めないで** ください
+e.g. "-gc -h5 vmid 1000"
+              ^^^^
+              jstat コマンドで vmid を挿入する箇所に "vmid" と描いてください。
+　　　　　　　実際の java アプリケーションの PID が置換されます。
+
+使用例
+$ jstatonce -o app.log "java -cp app.jar com.example.App -J-Xms100m -J-Xmx100m" "-gc -h5 vmid 1000ms"
+`
+}
+
+/* jstatonce [jstatonce options] "[java execute command]" "[jstat arguments]"
  *
  * e.g.
  * $ jstatonce
  */
 func main() {
-	javaFields := strings.Fields(os.Args[1])
-	javaCmd := javaFields[0]
-	javaArgs := javaFields[1:]
-	jstatArgs := os.Args[2:]
+	err, opts := argparse(os.Args)
+	if err != nil {
+		fmt.Print(err)
+		os.Exit(1)
+	}
+	if opts.needHelp {
+		fmt.Print(help())
+		os.Exit(0)
+	}
+
+	javaCmd := opts.javaArgs[0]
+	javaArgs := opts.javaArgs[1:]
 
 	jvmCmd := exec.Command(javaCmd, javaArgs...)
-	err := jvmCmd.Start()
+	err = jvmCmd.Start()
 	if err != nil {
 		fmt.Errorf("failed execute java: %s\n", err)
 	}
 
-	replacedArgs := replaceVmid(jstatArgs, jvmCmd.Process.Pid)
+	replacedArgs := replaceVmid(opts.jstatArgs, jvmCmd.Process.Pid)
 	jstatCmd := exec.Command("jstat", replacedArgs...)
 	jstatStdout, err := jstatCmd.StdoutPipe()
 	if err != nil {
