@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -67,15 +66,8 @@ func main() {
 	defer jvmOutFile.Close()
 
 	jvmCmd := exec.Command(javaCmd, javaArgs...)
-	jvmCmdStdout, err := jvmCmd.StdoutPipe()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed pipe jvm stdout: %s\n", err)
-		os.Exit(1)
-	}
-
-	go func() {
-		io.Copy(jvmOutFile, jvmCmdStdout)
-	}()
+	jvmCmd.Stdout = jvmOutFile
+	jvmCmd.Stderr = jvmOutFile
 
 	err = jvmCmd.Start()
 	if err != nil {
@@ -85,23 +77,8 @@ func main() {
 
 	replacedArgs := replaceVmid(opts.jstatArgs, jvmCmd.Process.Pid)
 	jstatCmd := exec.Command("jstat", replacedArgs...)
-	jstatStdout, err := jstatCmd.StdoutPipe()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed pipe jstat stdout: %s\n", err)
-		os.Exit(1)
-	}
-	defer jstatStdout.Close()
-	jstatStderr, err := jstatCmd.StderrPipe()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed pipe jstat stderr: %s\n", err)
-		os.Exit(1)
-	}
-	defer jstatStderr.Close()
-
-	go func() {
-		io.Copy(os.Stdout, jstatStdout)
-		io.Copy(os.Stderr, jstatStderr)
-	}()
+	jstatCmd.Stdout = os.Stdout
+	jstatCmd.Stderr = os.Stderr
 
 	err = jstatCmd.Run()
 	if err != nil {

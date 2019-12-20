@@ -7,7 +7,8 @@ public class HeapTest {
             Thread.sleep(100);
             /* 3MBの短命オブジェクトを作り続ける */
             StringBuffer tempStr = new StringBuffer(3000000);
-            System.out.println(i);
+            System.out.printf("stdout: %d\n", i);
+            System.err.printf("stderr: %d\n", i);
             i++;
         }
     }
