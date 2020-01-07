@@ -58,7 +58,7 @@ func main() {
 	javaCmd := opts.javaArgs[0]
 	javaArgs := opts.javaArgs[1:]
 
-	jvmOutFile, err := os.Create(opts.javaOutput)
+	jvmOutFile, err := os.OpenFile(opts.javaOutput, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "can not open file: %s, couse %s\n", opts.javaOutput, err)
 		os.Exit(1)
